@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TaskMaster | Koushani Chandra</title>
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
+  <link rel="stylesheet" href="/static/styles.css" /> <!-- Added CSS file link -->
+
+  <style>
+    .task-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+    .priority-high { border-left: 4px solid #ef4444; }
+    .priority-medium { border-left: 4px solid #f59e0b; }
+    .priority-low { border-left: 4px solid #10b981; }
+    #vanta-bg { position:absolute; top:0; left:0; width:100%; height:100%; z-index:-1; }
+  </style>
+</head>
+<body class="bg-indigo-50">
+  <div id="vanta-bg"></div>
+
+  <!-- Navigation -->
+  <nav class="bg-white bg-opacity-90 shadow-sm backdrop-filter backdrop-blur-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16">
+        <div class="flex items-center">
+          <div class="flex-shrink-0 flex items-center">
+            <i data-feather="check-circle" class="text-indigo-600 h-8 w-8"></i>
+            <span class="ml-2 text-xl font-bold text-gray-800">TaskMaster</span>
+          </div>
+        </div>
+
+        <div class="hidden md:flex md:items-center md:space-x-8">
+          <a href="#dashboardSection" class="nav-link text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
+          <a href="#projectsSection" class="nav-link text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Projects</a>
+          <a href="#calendarSection" class="nav-link text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Calendar</a>
+          <a href="#reportsSection" class="nav-link text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Reports</a>
+        </div>
+
+        <div class="flex items-center">
+          <button id="newTaskBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition">
+            <i data-feather="plus" class="h-4 w-4 inline mr-1"></i> New Task
+          </button>
+          <div class="ml-4 relative">
+            <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center cursor-pointer">
+              <i data-feather="user" class="text-indigo-600 h-4 w-4"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div id="dashboardSection" class="flex flex-col md:flex-row gap-8">
+      <!-- Sidebar -->
+      <aside class="w-full md:w-64 flex-shrink-0">
+        <div class="bg-white rounded-lg shadow-sm p-6 sticky top-8">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Filters</h3>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <select id="filterStatus" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 rounded-md">
+                <option>All Tasks</option>
+                <option>To Do</option>
+                <option>In Progress</option>
+                <option>Completed</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+              <select id="filterPriority" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 rounded-md">
+                <option>All Priorities</option>
+                <option>High</option>
+                <option>Medium</option>
+                <option>Low</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+              <select id="filterDate" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 rounded-md">
+                <option>All Dates</option>
+                <option>Today</option>
+                <option>This Week</option>
+                <option>This Month</option>
+              </select>
+            </div>
+            <button id="applyFiltersBtn" class="w-full bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition">
+              Apply Filters
+            </button>
+          </div>
+          <div class="mt-8">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Quick Stats</h3>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Total Tasks</span>
+                <span id="totalTasksCount" class="text-sm font-medium text-indigo-600">0</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Completed</span>
+                <span id="completedCount" class="text-sm font-medium text-green-600">0</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Overdue</span>
+                <span id="overdueCount" class="text-sm font-medium text-red-600">0</span>
+              </div>
+            </div>
+          </div>
+          <div class="mt-8">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Database Status</h3>
+            <div id="dbStatus" class="text-sm text-gray-600">Checking connection...</div>
+          </div>
+        </div>
+      </aside>
+      <!-- Task list -->
+      <section class="flex-1">
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-900">My Tasks</h2>
+            <div class="flex space-x-2">
+              <button id="listViewBtn" class="p-2 rounded-md hover:bg-gray-100" title="List view">
+                <i data-feather="list" class="text-gray-600 h-4 w-4"></i>
+              </button>
+              <button id="gridViewBtn" class="p-2 rounded-md hover:bg-gray-100" title="Grid view">
+                <i data-feather="grid" class="text-gray-600 h-4 w-4"></i>
+              </button>
+            </div>
+          </div>
+          <div id="taskList" class="space-y-4">
+            <!-- tasks will render here -->
+          </div>
+        </div>
+        <!-- Add Task Form -->
+        <div id="addTaskForm" class="bg-white rounded-lg shadow-sm p-6" data-aos="fade-up">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Add New Task</h3>
+          <form id="taskForm">
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div>
+                <label for="task-title" class="block text-sm font-medium text-gray-700">Task Title</label>
+                <input type="text" name="task-title" id="task-title" class="mt-1 block w-full border-gray-300 rounded-md" required>
+              </div>
+              <div>
+                <label for="due-date" class="block text-sm font-medium text-gray-700">Due Date</label>
+                <input type="date" name="due-date" id="due-date" class="mt-1 block w-full border-gray-300 rounded-md" required>
+              </div>
+              <div>
+                <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
+                <select id="priority" name="priority" class="mt-1 block w-full border-gray-300 rounded-md">
+                  <option>Low</option>
+                  <option>Medium</option>
+                  <option>High</option>
+                </select>
+              </div>
+              <div>
+                <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
+                <select id="category" name="category" class="mt-1 block w-full border-gray-300 rounded-md">
+                  <option>Work</option>
+                  <option>Personal</option>
+                  <option>Study</option>
+                  <option>Health</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div class="sm:col-span-2">
+                <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                <textarea id="description" name="description" rows="3" class="mt-1 block w-full border-gray-300 rounded-md"></textarea>
+              </div>
+            </div>
+            <div class="mt-6">
+              <button type="submit" class="inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                <i data-feather="plus" class="h-4 w-4 mr-2"></i> Add Task
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
+
+    <!-- Projects section -->
+    <section id="projectsSection" class="mt-12 section-container">
+      <h3 class="text-xl font-semibold mb-4 text-indigo-800">Projects Overview</h3>
+      <p class="text-sm text-gray-600 mb-4">Tasks grouped by category (treated as projects).</p>
+      <div id="projectsContent" class="space-y-6">
+        <!-- Projects will render here -->
+      </div>
+      <div id="projectsStatus" class="mt-4 text-sm text-gray-600"></div>
+    </section>
+
+    <!-- Calendar section -->
+    <section id="calendarSection" class="mt-8 section-container">
+      <h3 class="text-xl font-semibold mb-4 text-indigo-800">Calendar View</h3>
+      <p class="text-sm text-gray-600 mb-4">Upcoming tasks sorted by due date.</p>
+      <div id="calendarTasks" class="space-y-4">
+        <!-- Calendar tasks will render here -->
+      </div>
+      <div id="calendarStatus" class="mt-4 text-sm text-gray-600"></div>
+    </section>
+
+    <!-- Reports section -->
+    <section id="reportsSection" class="mt-8 section-container">
+      <h3 class="text-xl font-semibold mb-4 text-indigo-800">Reports Summary</h3>
+      <p class="text-sm text-gray-600 mb-4">Detailed task statistics with visual indicators.</p>
+      <div id="reportsSummary" class="space-y-4">
+        <!-- Reports will render here -->
+      </div>
+      <div id="reportsStatus" class="mt-4 text-sm text-gray-600"></div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white bg-opacity-90 mt-12">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center">
+      <p class="text-base text-gray-500">&copy; 2025 TaskMaster. Developed by Koushani Chandra.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Vanta background + AOS + feather
+    VANTA.NET({
+      el: "#vanta-bg",
+      mouseControls: true,
+      touchControls: true,
+      color: 0x6366f1,
+      backgroundColor: 0xf1f5f9,
+      points: 12, maxDistance: 22, spacing: 18
+    });
+    AOS.init({ duration: 800, once: true });
+    feather.replace();
+
+    // DOM refs
+    const taskListEl = document.getElementById('taskList');
+    const filterStatusEl = document.getElementById('filterStatus');
+    const filterPriorityEl = document.getElementById('filterPriority');
+    const filterDateEl = document.getElementById('filterDate');
+    const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+    const taskForm = document.getElementById('taskForm');
+    const newTaskBtn = document.getElementById('newTaskBtn');
+    const dbStatusEl = document.getElementById('dbStatus');
+    const projectsContentEl = document.getElementById('projectsContent');
+    const calendarTasksEl = document.getElementById('calendarTasks');
+    const reportsSummaryEl = document.getElementById('reportsSummary');
+    const projectsStatusEl = document.getElementById('projectsStatus');
+    const calendarStatusEl = document.getElementById('calendarStatus');
+    const reportsStatusEl = document.getElementById('reportsStatus');
+
+    // Quick stats elements
+    const totalTasksCount = document.getElementById('totalTasksCount');
+    const completedCount = document.getElementById('completedCount');
+    const overdueCount = document.getElementById('overdueCount');
+
+    let tasks = []; // will be loaded from backend
+
+    // --------- Helper functions ----------
+    function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function checkDbConnection() {
+      fetch('/test_db')
+        .then(res => res.json())
+        .then(data => {
+          if (data.message === 'Database connection successful') {
+            dbStatusEl.textContent = 'Database Connected';
+            dbStatusEl.classList.remove('text-gray-600', 'text-red-600');
+            dbStatusEl.classList.add('text-green-600');
+          } else {
+            dbStatusEl.textContent = 'Database Not Connected';
+            dbStatusEl.classList.remove('text-gray-600', 'text-green-600');
+            dbStatusEl.classList.add('text-red-600');
+          }
+        })
+        .catch(err => {
+          console.error('Error checking DB:', err);
+          dbStatusEl.textContent = 'Database Not Connected';
+          dbStatusEl.classList.remove('text-gray-600', 'text-green-600');
+          dbStatusEl.classList.add('text-red-600');
+        });
+    }
+
+    function fetchTasks() {
+      fetch('/tasks')
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to fetch tasks');
+          return res.json();
+        })
+        .then(data => {
+          tasks = data;
+          updateQuickStats();
+          renderTasks();
+          renderProjects();
+          renderCalendar();
+          renderReports();
+        })
+        .catch(err => {
+          console.error('Error fetching tasks:', err);
+          taskListEl.innerHTML = '<div class="text-sm text-red-500">Failed to load tasks. Please try again later.</div>';
+          projectsStatusEl.textContent = 'Error loading projects';
+          calendarStatusEl.textContent = 'Error loading calendar';
+          reportsStatusEl.textContent = 'Error loading reports';
+        });
+    }
+
+    function addTaskToBackend(task) {
+      fetch('/addTask', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(task)
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to add task');
+        return res.json();
+      })
+      .then(data => {
+        fetchTasks();
+        alert('Task recorded successfully!');
+      })
+      .catch(err => {
+        console.error('Error adding task:', err);
+        alert('Failed to add task. Please try again.');
+      });
+    }
+
+    function updateTaskInBackend(task) {
+      fetch(`/updateTask/${task.id}`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(task)
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to update task');
+        return res.json();
+      })
+      .then(data => {
+        fetchTasks();
+      })
+      .catch(err => {
+        console.error('Error updating task:', err);
+        alert('Failed to update task. Please try again.');
+      });
+    }
+
+    function deleteTaskFromBackend(taskId) {
+      fetch(`/deleteTask/${taskId}`, { method: 'DELETE' })
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to delete task');
+          return res.json();
+        })
+        .then(data => {
+          fetchTasks();
+        })
+        .catch(err => {
+          console.error('Error deleting task:', err);
+          alert('Failed to delete task. Please try again.');
+        });
+    }
+
+    function updateQuickStats() {
+      const total = tasks.length;
+      const completed = tasks.filter(t => t.status === 'Completed').length;
+      const now = new Date(); now.setHours(0,0,0,0);
+      const overdue = tasks.filter(t => {
+        const d = new Date(t.dueDate + 'T00:00:00');
+        return t.status !== 'Completed' && d.getTime() < now.getTime();
+      }).length;
+
+      totalTasksCount.textContent = total;
+      completedCount.textContent = completed;
+      overdueCount.textContent = overdue;
+    }
+
+    function renderTasks() {
+      const statusFilter = filterStatusEl.value;
+      const priorityFilter = filterPriorityEl.value;
+      const dateFilter = filterDateEl.value;
+
+      const today = new Date(); today.setHours(0,0,0,0);
+      const day = today.getDay();
+      const diffToMonday = (day + 6) % 7;
+      const startOfWeek = new Date(today); startOfWeek.setDate(today.getDate() - diffToMonday);
+      startOfWeek.setHours(0,0,0,0);
+      const endOfWeek = new Date(startOfWeek); endOfWeek.setDate(startOfWeek.getDate() + 6); endOfWeek.setHours(23,59,59,999);
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const endOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0, 23,59,59,999);
+
+      const parseLocal = s => new Date(s + 'T00:00:00');
+
+      function dateMatchesFilter(dStr) {
+        if (!dStr) return true;
+        if (dateFilter === 'All Dates') return true;
+        const d = parseLocal(dStr);
+        if (dateFilter === 'Today') return d.getTime() === today.getTime();
+        if (dateFilter === 'This Week') return d >= startOfWeek && d <= endOfWeek;
+        if (dateFilter === 'This Month') return d >= startOfMonth && d <= endOfMonth;
+        return true;
+      }
+
+      const visible = tasks.filter(t => {
+        if (statusFilter !== 'All Tasks' && t.status !== statusFilter) return false;
+        if (priorityFilter !== 'All Priorities' && t.priority !== priorityFilter) return false;
+        if (!dateMatchesFilter(t.dueDate)) return false;
+        return true;
+      });
+
+      taskListEl.innerHTML = '';
+      if (visible.length === 0) {
+        taskListEl.innerHTML = '<div class="text-sm text-gray-500">No tasks match the selected filters.</div>';
+      } else {
+        visible.forEach(t => {
+          const card = document.createElement('div');
+          card.className = `task-card bg-white border border-gray-200 rounded-lg p-4 transition ${t.priority === 'High' ? 'priority-high' : t.priority === 'Medium' ? 'priority-medium' : 'priority-low'}`;
+          const checked = t.status === 'Completed' ? 'checked' : '';
+          const titleClass = t.status === 'Completed' ? 'text-sm font-medium text-gray-900 line-through' : 'text-sm font-medium text-gray-900';
+          card.setAttribute('data-aos', 'fade-up');
+
+          card.innerHTML = `
+            <div class="flex items-start justify-between">
+              <div class="flex items-start">
+                <div class="flex items-center h-5">
+                  <input type="checkbox" class="task-checkbox focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded" ${checked} />
+                </div>
+                <div class="ml-3">
+                  <p class="${titleClass}">${escapeHtml(t.title)}</p>
+                  <p class="text-sm text-gray-500 mt-1">Due: ${escapeHtml(t.dueDate)}</p>
+                  <div class="mt-2 flex flex-wrap gap-2">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-${t.priority === 'High' ? 'red' : t.priority === 'Medium' ? 'yellow' : 'green'}-100 text-${t.priority === 'High' ? 'red' : t.priority === 'Medium' ? 'yellow' : 'green'}-800">${escapeHtml(t.priority)}</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">${escapeHtml(t.category)}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex space-x-2">
+                <button class="editBtn text-gray-400 hover:text-indigo-600" title="Edit"><i data-feather="edit-2"></i></button>
+                <button class="deleteBtn text-gray-400 hover:text-red-600" title="Delete"><i data-feather="trash-2"></i></button>
+              </div>
+            </div>`;
+
+          taskListEl.appendChild(card);
+          feather.replace();
+
+          // checkbox
+          card.querySelector('.task-checkbox').addEventListener('change', () => {
+            t.status = card.querySelector('.task-checkbox').checked ? 'Completed' : 'To Do';
+            updateTaskInBackend(t);
+          });
+
+          // delete
+          card.querySelector('.deleteBtn').addEventListener('click', () => {
+            if (confirm('Delete task "' + t.title + '"?')) deleteTaskFromBackend(t.id);
+          });
+
+          // edit
+          card.querySelector('.editBtn').addEventListener('click', () => {
+            const newTitle = prompt('Edit title', t.title);
+            if (newTitle === null) return;
+            const newDue = prompt('Edit due date (YYYY-MM-DD)', t.dueDate);
+            if (newDue === null) return;
+            const newPriority = prompt('Edit priority (Low/Medium/High)', t.priority) || t.priority;
+            const newCategory = prompt('Edit category', t.category) || t.category;
+            t.title = newTitle.trim() || t.title;
+            t.dueDate = newDue.trim() || t.dueDate;
+            t.priority = newPriority;
+            t.category = newCategory;
+            updateTaskInBackend(t);
+          });
+        });
+      }
+    }
+
+    // Render Projects: Group tasks by category with progress indicators
+    function renderProjects() {
+      projectsStatusEl.textContent = 'Loading projects...';
+      const categories = {};
+      tasks.forEach(t => {
+        if (!categories[t.category]) {
+          categories[t.category] = [];
+        }
+        categories[t.category].push(t);
+      });
+
+      projectsContentEl.innerHTML = '';
+      Object.keys(categories).forEach(cat => {
+        const total = categories[cat].length;
+        const completed = categories[cat].filter(t => t.status === 'Completed').length;
+        const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+        const projectDiv = document.createElement('div');
+        projectDiv.className = 'project-card';
+        projectDiv.innerHTML = `
+          <div class="flex justify-between items-center mb-2">
+            <h4 class="text-md font-semibold text-indigo-700">${escapeHtml(cat)}</h4>
+            <span class="text-xs font-medium text-gray-600">${completed}/${total} Completed (${progress}%)</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-bar-fill" style="width: ${progress}%"></div>
+          </div>
+          <ul class="mt-3 space-y-2">
+            ${categories[cat].map(t => `
+              <li class="text-sm text-gray-600 flex justify-between">
+                <span>${escapeHtml(t.title)}</span>
+                <span class="text-xs text-${t.status === 'Completed' ? 'green' : t.status === 'In Progress' ? 'yellow' : 'red'}-600">${escapeHtml(t.status)}</span>
+              </li>
+            `).join('')}
+          </ul>
+        `;
+        projectsContentEl.appendChild(projectDiv);
+      });
+
+      if (Object.keys(categories).length === 0) {
+        projectsContentEl.innerHTML = '<p class="text-sm text-gray-500">No projects available.</p>';
+        projectsStatusEl.textContent = 'No projects found';
+      } else {
+        projectsStatusEl.textContent = `Loaded ${Object.keys(categories).length} projects`;
+        projectsStatusEl.classList.add('text-green-600');
+      }
+    }
+
+    // Render Calendar: List upcoming tasks with indicators
+    function renderCalendar() {
+      calendarStatusEl.textContent = 'Loading calendar...';
+      const now = new Date();
+      const upcoming = tasks
+        .filter(t => new Date(t.dueDate) >= now && t.status !== 'Completed')
+        .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+      calendarTasksEl.innerHTML = '';
+      if (upcoming.length === 0) {
+        calendarTasksEl.innerHTML = '<p class="text-sm text-gray-500">No upcoming tasks.</p>';
+        calendarStatusEl.textContent = 'No upcoming tasks';
+      } else {
+        upcoming.forEach(t => {
+          const taskItem = document.createElement('div');
+          taskItem.className = 'calendar-task';
+          taskItem.innerHTML = `
+            <div class="flex justify-between items-center">
+              <p class="text-sm font-medium text-gray-800">${escapeHtml(t.title)}</p>
+              <span class="text-xs text-${t.priority === 'High' ? 'red' : t.priority === 'Medium' ? 'yellow' : 'green'}-600">${escapeHtml(t.priority)}</span>
+            </div>
+            <p class="text-xs text-gray-500">Due: ${escapeHtml(t.dueDate)} | Category: ${escapeHtml(t.category)}</p>
+          `;
+          calendarTasksEl.appendChild(taskItem);
+        });
+        calendarStatusEl.textContent = `Loaded ${upcoming.length} upcoming tasks`;
+        calendarStatusEl.classList.add('text-green-600');
+      }
+    }
+
+    // Render Reports: Detailed stats with progress bars
+    function renderReports() {
+      reportsStatusEl.textContent = 'Loading reports...';
+      const total = tasks.length;
+      const completed = tasks.filter(t => t.status === 'Completed').length;
+      const inProgress = tasks.filter(t => t.status === 'In Progress').length;
+      const toDo = tasks.filter(t => t.status === 'To Do').length;
+      const highPriority = tasks.filter(t => t.priority === 'High').length;
+      const mediumPriority = tasks.filter(t => t.priority === 'Medium').length;
+      const lowPriority = tasks.filter(t => t.priority === 'Low').length;
+      const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+      reportsSummaryEl.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="report-card">
+            <h4 class="text-md font-semibold text-indigo-700 mb-2">Task Status Breakdown</h4>
+            <div class="space-y-2">
+              <div>
+                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                  <span>To Do: ${toDo}</span>
+                  <span>${total > 0 ? Math.round((toDo / total) * 100) : 0}%</span>
+                </div>
+                <div class="progress-bar"><div class="progress-bar-fill bg-red-500" style="width: ${total > 0 ? (toDo / total) * 100 : 0}%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                  <span>In Progress: ${inProgress}</span>
+                  <span>${total > 0 ? Math.round((inProgress / total) * 100) : 0}%</span>
+                </div>
+                <div class="progress-bar"><div class="progress-bar-fill bg-yellow-500" style="width: ${total > 0 ? (inProgress / total) * 100 : 0}%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                  <span>Completed: ${completed}</span>
+                  <span>${total > 0 ? Math.round((completed / total) * 100) : 0}%</span>
+                </div>
+                <div class="progress-bar"><div class="progress-bar-fill bg-green-500" style="width: ${total > 0 ? (completed / total) * 100 : 0}%"></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="report-card">
+            <h4 class="text-md font-semibold text-indigo-700 mb-2">Priority Breakdown</h4>
+            <div class="space-y-2">
+              <div>
+                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                  <span>High: ${highPriority}</span>
+                  <span>${total > 0 ? Math.round((highPriority / total) * 100) : 0}%</span>
+                </div>
+                <div class="progress-bar"><div class="progress-bar-fill bg-red-500" style="width: ${total > 0 ? (highPriority / total) * 100 : 0}%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                  <span>Medium: ${mediumPriority}</span>
+                  <span>${total > 0 ? Math.round((mediumPriority / total) * 100) : 0}%</span>
+                </div>
+                <div class="progress-bar"><div class="progress-bar-fill bg-yellow-500" style="width: ${total > 0 ? (mediumPriority / total) * 100 : 0}%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                  <span>Low: ${lowPriority}</span>
+                  <span>${total > 0 ? Math.round((lowPriority / total) * 100) : 0}%</span>
+                </div>
+                <div class="progress-bar"><div class="progress-bar-fill bg-green-500" style="width: ${total > 0 ? (lowPriority / total) * 100 : 0}%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-4 report-card">
+          <h4 class="text-md font-semibold text-indigo-700 mb-2">Overall Completion Rate</h4>
+          <div class="flex justify-between text-sm text-gray-600 mb-1">
+            <span>Completion Rate</span>
+            <span>${completionRate}%</span>
+          </div>
+          <div class="progress-bar"><div class="progress-bar-fill bg-indigo-600" style="width: ${completionRate}%"></div></div>
+        </div>
+      `;
+      reportsStatusEl.textContent = `Loaded reports for ${total} tasks`;
+      reportsStatusEl.classList.add('text-green-600');
+    }
+
+    // Apply filters
+    applyFiltersBtn.addEventListener('click', renderTasks);
+
+    // Add task
+    taskForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const title = document.getElementById('task-title').value.trim();
+      const dueDate = document.getElementById('due-date').value;
+      if (!title || !dueDate) {
+        alert('Please fill in all required fields.');
+        return;
+      }
+      const newTask = {
+        title: title,
+        dueDate: dueDate,
+        priority: document.getElementById('priority').value,
+        category: document.getElementById('category').value,
+        description: document.getElementById('description').value,
+        status: 'To Do'
+      };
+      addTaskToBackend(newTask);
+      taskForm.reset();
+    });
+
+    // New Task button scroll
+    newTaskBtn.addEventListener('click', () => {
+      document.getElementById('addTaskForm').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Header nav smooth scroll
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        const target = document.querySelector(link.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('text-indigo-600'));
+        link.classList.add('text-indigo-600');
+      });
+    });
+
+    // Initial fetch and check DB
+    checkDbConnection();
+    fetchTasks();
+  </script>
+</body>
+</html>
